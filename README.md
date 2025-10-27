@@ -1,0 +1,1 @@
+# embroidery-store-theme
