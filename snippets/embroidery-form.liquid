@@ -1,0 +1,238 @@
+{% comment %}
+  Reusable Embroidery Form
+  Usage: {% render 'embroidery-form', product: product, item: item, context: 'product' | 'cart' %}
+  Parameters:
+    - product: Product object (required)
+    - item: Cart item object (optional, for cart context)
+    - context: 'product' or 'cart' (default: 'product')
+    - unique_id: Unique identifier for form elements (optional, auto-generated if not provided)
+{% endcomment %}
+
+{% assign cfg_ref = product.metafields.custom.embroidery_config %}
+{% if cfg_ref and cfg_ref.value and cfg_ref.value.enabled == true %}
+  {% assign cfg = cfg_ref.value %}
+  {% assign fee_id = cfg.fee_variant %}
+  {% assign max_chars = cfg.max_chars | default: 10 %}
+  {% assign unique_id = unique_id | default: 'embx' %}
+  {% assign ctx = context | default: 'product' %}
+  
+  {% if ctx == 'cart' %}
+    {% comment %} Cart inline modal {% endcomment %}
+    <div class="embx-modal hidden mt-3 rounded-lg border border-gray-200 bg-white p-4" data-embx-modal
+         data-fee-variant-id="{{ fee_id | split: '/' | last }}">
+      <div>
+        <div>
+          <!-- Left Inputs -->
+          <div >
+            <div class="flex flex-col items-start justify-between gap-[40px]">
+                <!-- Name Input -->
+                <div class="space-y-5">
+                    <div>
+                    <label class="mb-1 block text-sm font-semibold">Add up to {{ max_chars }} characters</label>
+                    <input id="{{ unique_id }}-text"
+                            maxlength="{{ max_chars }}"
+                            placeholder="{{ cfg.placeholder | default: 'Embroidered Name' }}"
+                            class="embx-input-name w-full h-11 rounded-lg border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-black/20">
+                    </div>
+
+                    <!-- Colors -->
+                    {% if cfg.colors and cfg.colors.value %}
+                    <div>
+                        <label class="mb-1 block text-sm font-semibold">Choose letter colour</label>
+                        <div id="{{ unique_id }}-colour-group" class="flex flex-wrap items-center gap-4" role="radiogroup">
+                        {% for c in cfg.colors.value %}
+                            {% assign cap = c.label | default: c.title %}
+                            <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="radio" name="embx-colour" value="{{ cap }}" class="sr-only peer embx-input-colour" {% if forloop.first or c.default %}checked{% endif %}>
+                            <span class="inline-block h-7 w-7 rounded-full border border-gray-300 peer-checked:ring-2 peer-checked:ring-black/30" style="background: {{ c.hex }};"></span>
+                            <span class="text-gray-600 text-xs peer-checked:font-semibold">{{ cap }}</span>
+                            </label>
+                        {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Fonts -->
+                    {% if cfg.fonts and cfg.fonts.value %}
+                    <div>
+                        <label class="mb-1 block text-sm font-semibold">Choose font</label>
+                        <div id="{{ unique_id }}-font-group" class="flex flex-wrap gap-3" role="radiogroup">
+                        {% for f in cfg.fonts.value %}
+                            {% assign flabel = f.label | default: f.title %}
+                            <label class="relative cursor-pointer select-none">
+                            <input type="radio" name="embx-font" value="{{ flabel }}" class="peer sr-only embx-input-font" {% if forloop.first %}checked{% endif %}>
+                            <span class="inline-flex min-w-[110px] items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm transition peer-checked:border-gray-900 peer-checked:font-semibold peer-checked:ring-2 peer-checked:ring-black/20">
+                                {{ flabel }}
+                            </span>
+                            </label>
+                        {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+
+                <!-- Right Mockup -->
+            <div class="h-full">
+                {% if cfg.mockup %}
+                <div class="flex">
+                    {{ cfg.mockup | image_url: width: 228 | image_tag: loading: 'lazy', class: 'max-h-44 object-contain' }}
+                </div>
+                {% else %}
+                <div class="flex h-44 items-center justify-center rounded-lg border border-dashed border-gray-300 bg-white text-gray-400">
+                    Mockup Image
+                </div>
+                {% endif %}
+            </div>
+        </div>
+            <p class="text-xl py-4">
+              Unfortunately we can not accept returns or exchanges on embroidered items.
+            </p>
+          </div>
+        
+        <div class="space-y-3">
+          <div class="flex gap-2 justify-end">
+            <button type="button" class="embx-cancel button button--secondary">Cancel</button>
+            <button type="button" class="embx-save button">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% else %}
+    {% comment %} Product detail form {% endcomment %}
+    <div id="{{ unique_id }}"
+         class="text-sm"
+         data-embx
+         data-fee-variant-gid="{{ fee_id }}">
+         
+      <!-- Top row -->
+      <div class="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+        <label for="{{ unique_id }}-check" class="flex items-center gap-3 cursor-pointer select-none">
+          <input id="{{ unique_id }}-check" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-2 focus:ring-black/20" />
+          <span class="font-medium">Add Embroidered Name</span>
+        </label>
+
+        <!-- Price placeholder (will be filled via JS) -->
+        <span id="{{ unique_id }}-fee-display" class="ml-3 whitespace-nowrap font-semibold opacity-60">
+          Loading price…
+        </span>
+      </div>
+
+      <!-- Expand Panel -->
+      <div id="{{ unique_id }}-panel" class="hidden rounded-b-xl border border-t-0 border-gray-200 px-4 py-4">
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+
+          <!-- Left Inputs -->
+          <div >
+            <div class="flex flex-col md:flex-row md:items-center items-start justify-between gap-[40px]">
+                <!-- Name Input -->
+                <div class="space-y-5 w-[349px]">
+                    <div>
+                    <label class="mb-1 block text-sm font-semibold">Add up to {{ max_chars }} characters</label>
+                    <input id="{{ unique_id }}-text"
+                            maxlength="{{ max_chars }}"
+                            placeholder="{{ cfg.placeholder | default: 'Embroidered Name' }}"
+                            class="w-full h-11 rounded-lg border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-black/20">
+                    </div>
+
+                    <!-- Colors -->
+                    {% if cfg.colors and cfg.colors.value %}
+                    <div>
+                        <label class="mb-1 block text-sm font-semibold">Choose letter colour</label>
+                        <div id="{{ unique_id }}-colour-group" class="flex flex-wrap items-center gap-4" role="radiogroup">
+                        {% for c in cfg.colors.value %}
+                            {% assign cap = c.label | default: c.title %}
+                            <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="radio" name="embx-colour" value="{{ cap }}" class="sr-only peer" {% if forloop.first or c.default %}checked{% endif %}>
+                            <span class="inline-block h-7 w-7 rounded-full border border-gray-300 peer-checked:ring-2 peer-checked:ring-black/30" style="background: {{ c.hex }};"></span>
+                            <span class="text-gray-600 text-xs peer-checked:font-semibold">{{ cap }}</span>
+                            </label>
+                        {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Fonts -->
+                    {% if cfg.fonts and cfg.fonts.value %}
+                    <div>
+                        <label class="mb-1 block text-sm font-semibold">Choose font</label>
+                        <div id="{{ unique_id }}-font-group" class="flex flex-wrap gap-3" role="radiogroup">
+                        {% for f in cfg.fonts.value %}
+                            {% assign flabel = f.label | default: f.title %}
+                            <label class="relative cursor-pointer select-none">
+                            <input type="radio" name="embx-font" value="{{ flabel }}" class="peer sr-only" {% if forloop.first %}checked{% endif %}>
+                            <span class="inline-flex min-w-[110px] items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm transition peer-checked:border-gray-900 peer-checked:font-semibold peer-checked:ring-2 peer-checked:ring-black/20">
+                                {{ flabel }}
+                            </span>
+                            </label>
+                        {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+
+                <!-- Right Mockup -->
+            <div class="h-full">
+                {% if cfg.mockup %}
+                <div class="flex">
+                    {{ cfg.mockup | image_url: width: 228 | image_tag: loading: 'lazy', class: 'max-h-44 object-contain' }}
+                </div>
+                {% else %}
+                <div class="flex h-44 items-center justify-center rounded-lg border border-dashed border-gray-300 bg-white text-gray-400">
+                    Mockup Image
+                </div>
+                {% endif %}
+            </div>
+        </div>
+            <p class="text-xl pt-4">
+              Unfortunately we can not accept returns or exchanges on embroidered items.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (async () => {
+        const root = document.querySelector('[data-embx]');
+        if (!root) return;
+
+        const gid = root.dataset.feeVariantGid;
+        const out = root.querySelector('#{{ unique_id }}-fee-display');
+
+        const SF_TOKEN = '{{ shop.storefront_access_token | default: "de802de8df7e6fabed222b21a3df2005" }}';
+
+        const query = `
+          query ($id: ID!) {
+            node(id: $id) {
+              ... on ProductVariant {
+                price: priceV2 { amount currencyCode }
+              }
+            }
+          }
+        `;
+
+        try {
+          const res = await fetch('/api/2024-01/graphql.json', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Shopify-Storefront-Access-Token': SF_TOKEN
+            },
+            body: JSON.stringify({ query, variables: { id: gid } })
+          });
+          const json = await res.json();
+          const price = json?.data?.node?.price;
+          if (!price) throw 0;
+
+          out.textContent = `+${parseFloat(price.amount).toLocaleString()} ${price.currencyCode}`;
+          out.classList.remove('opacity-60');
+        } catch (e) {
+          console.error('Failed to load fee price', e);
+          out.textContent = '(price unavailable)';
+        }
+      })();
+    </script>
+  {% endif %}
+{% endif %}

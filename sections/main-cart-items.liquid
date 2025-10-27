@@ -79,9 +79,13 @@
 
               <tbody>
                 {%- for item in cart.items -%}
+                  {%- if item.product.tags contains 'fee-embroidery' or item.properties['_fee'] != blank -%}{% continue %}{%- endif -%}
                   <tr
                     class="cart-item {% if item.parent_relationship.parent != null %}cart-item__nested-line{% endif %}"
                     id="CartItem-{{ item.index | plus: 1 }}"
+                    data-line-key="{{ item.key }}"
+                    data-embx-group="{{ item.properties._embx_group }}"
+                    data-product-url="{{ item.url }}"
                     {% if item.parent_relationship.parent != null %}
                       aria-label="{{- 'products.product.nested_label' | t: title: item.product.title, parent_title: item.parent_relationship.parent.title | escape -}}"
                     {% endif %}
@@ -146,21 +150,24 @@
                           {%- endif -%}
 
                           {%- for property in item.properties -%}
-                            {%- assign property_first_char = property.first | slice: 0 -%}
-                            {%- if property.last != blank and property_first_char != '_' -%}
-                              <div class="product-option">
-                                <dt>{{ property.first }}:</dt>
-                                <dd>
-                                  {%- if property.last contains '/uploads/' -%}
-                                    <a href="{{ property.last }}" class="link" target="_blank">
-                                      {{ property.last | split: '/' | last }}
-                                    </a>
-                                  {%- else -%}
-                                    {{ property.last }}
-                                  {%- endif -%}
-                                </dd>
-                              </div>
+                            {%- assign key = property.first -%}
+                            {%- assign value = property.last -%}
+                          
+                            {%- if value == blank -%}{% continue %}{%- endif -%}
+                            {%- if key == "Embroidery" or key == "Name to embroider" or key == "Colour" or key == "Font" or key == "group" or key == "_fee" or key == "_embx_group" -%}
+                              {% continue %}
                             {%- endif -%}
+                          
+                            <div class="product-option">
+                              <dt>{{ key }}:</dt>
+                              <dd>
+                                {%- if value contains '/uploads/' -%}
+                                  <a href="{{ value }}" target="_blank">{{ value | split: '/' | last }}</a>
+                                {%- else -%}
+                                  {{ value }}
+                                {%- endif -%}
+                              </dd>
+                            </div>
                           {%- endfor -%}
                         </dl>
 
@@ -175,6 +182,43 @@
                           </li>
                         {%- endfor -%}
                       </ul>
+                    {%- comment -%} Embroidery addon block {%- endcomment -%}
+                    {%- assign cfg_ref = item.product.metafields.custom.embroidery_config -%}
+                    {%- if cfg_ref and cfg_ref.value and cfg_ref.value.enabled == true -%}
+                      {%- assign cfg = cfg_ref.value -%}
+                      {%- assign fee_var = cfg.fee_variant.value -%}
+                      {%- assign has_embroidery = false -%}
+                      {%- if item.properties and item.properties["Embroidery"] == "Yes" -%}
+                        {%- assign has_embroidery = true -%}
+                      {%- endif -%}
+                      <div class="mt-3 rounded-lg bg-gray-50 p-4 w-[500px]">
+                        <div class="flex items-center justify-between">
+                          <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox"
+                                  class="embx-toggle cursor-pointer h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-2 focus:ring-gray-500"
+                                  {% if has_embroidery %}checked{% endif %}
+                                  {% if item.properties._embx_group == blank and has_embroidery %}data-legacy="1"{% endif %}
+                                  />
+                            <span class="text-sm">Add Embroidered Name</span>
+                          </label>
+                          {%- if fee_var -%}
+                            <div class="text-sm \">
+                              +{{ fee_var.price | money }}
+                            </div>
+                          {%- endif -%}
+                        </div>
+                        {%- comment -%} Inline embroidery form modal for cart {%- endcomment -%}
+                        {%- if has_embroidery -%}
+                          {%- assign _name = item.properties["Name to embroider"] -%}
+                          {%- assign _colour = item.properties["Colour"] -%}
+                          {%- assign _font = item.properties["Font"] -%}
+                          <p class="mt-2 text-sm text-gray-600">
+                            Embroidered Name: "{{ _name }}"{%- if _colour %}, {{ _colour }}{% endif -%}{%- if _font %}, {{ _font }}{% endif -%}
+                          </p>
+                        {%- endif -%}
+                        {% render 'embroidery-form', product: item.product, context: 'cart', unique_id: item.key %}
+                      </div>
+                    {%- endif -%}
                     </td>
 
                     <td class="cart-item__totals right medium-hide large-up-hide">

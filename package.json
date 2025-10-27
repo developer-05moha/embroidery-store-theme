@@ -1,0 +1,27 @@
+{
+  "name": "embroidery-store-theme",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev:tailwind": "tailwindcss -i ./assets/tailwind-input.css -o ./assets/tailwind-output.css --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/developer-05moha/embroidery-store-theme.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/developer-05moha/embroidery-store-theme/issues"
+  },
+  "homepage": "https://github.com/developer-05moha/embroidery-store-theme#readme",
+  "dependencies": {
+    "@tailwindcss/cli": "^4.1.16",
+    "@tailwindcss/postcss": "^4.1.16",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.16"
+  }
+}

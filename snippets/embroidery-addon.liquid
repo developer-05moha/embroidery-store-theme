@@ -1,0 +1,8 @@
+{% comment %}
+  Embroidery Add-on (UI only; price loaded via Storefront GraphQL)
+  Usage: {% render 'embroidery-addon', product: product %}
+  Requires:
+    product.metafields.custom.embroidery_config → metaobject `embroidery_config`
+{% endcomment %}
+
+{% render 'embroidery-form', product: product, context: 'product', unique_id: 'embx' %}
