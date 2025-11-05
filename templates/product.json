@@ -19,10 +19,6 @@
             "text_style": "uppercase"
           }
         },
-        "title": {
-          "type": "title",
-          "settings": {}
-        },
         "price": {
           "type": "price",
           "settings": {}
@@ -32,6 +28,22 @@
           "settings": {
             "picker_type": "button",
             "swatch_shape": "circle"
+          }
+        },
+        "title_BxRpT7": {
+          "type": "title",
+          "settings": {}
+        },
+        "icon_with_text_a8ATAp": {
+          "type": "icon-with-text",
+          "settings": {
+            "layout": "horizontal",
+            "icon_1": "heart",
+            "heading_1": "Heading",
+            "icon_2": "return",
+            "heading_2": "Heading",
+            "icon_3": "truck",
+            "heading_3": "Heading"
           }
         },
         "quantity_selector": {
@@ -58,9 +70,10 @@
       },
       "block_order": [
         "vendor",
-        "title",
         "price",
         "variant_picker",
+        "title_BxRpT7",
+        "icon_with_text_a8ATAp",
         "quantity_selector",
         "buy_buttons",
         "description",
